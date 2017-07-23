@@ -1,8 +1,10 @@
 package com.sunalyou;
 
+import com.netflix.discovery.converters.Auto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
@@ -22,6 +24,9 @@ public class ConsumerController {
     @Autowired
     private DiscoveryClient discoveryClient;
 
+    @Autowired
+    private LoadBalancerClient loadBalancerClient;
+
     @GetMapping("/hello")
     public String hello(){
         return "hello spring cloud";
@@ -35,6 +40,17 @@ public class ConsumerController {
            return this.restTemplate.getForObject(si.getUri() +"/hello", String.class);
         }
         return "";
+    }
+
+    @GetMapping("/loadBalanced/hello")
+    public String loadBalancedHello(){
+        return this.restTemplate.getForObject("http://microservice-provider-user/" + "hello", String.class);
+    }
+
+    @GetMapping("/loadBalanced")
+    public String LoadBalanced(){
+        ServiceInstance serviceInstance = this.loadBalancerClient.choose("microservice-provider-user");
+        return serviceInstance.getServiceId() + "-" + serviceInstance.getHost() +"-"+ serviceInstance.getPort();
     }
 
     @GetMapping("/get/ints")
